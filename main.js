@@ -61,47 +61,64 @@ async function load(reset) {
 }
 
 async function openMovie(id) {
-  box.innerHTML = '<p>Loading...</p>';
+  box.innerHTML = '<p style="padding:30px">Loading...</p>';
   modal.classList.add("show");
+  document.body.style.overflow = "hidden";
   const m = await api("/movie/" + id, "&append_to_response=credits,videos,watch/providers");
   const mine = MY[id];
   const vids = ((m.videos && m.videos.results) || []).filter(v => v.site === "YouTube" && v.type === "Trailer");
   const tr = vids.find(v => v.official) || vids[0];
   const prov = m["watch/providers"] && m["watch/providers"].results && m["watch/providers"].results.IN;
-  const cast = ((m.credits && m.credits.cast) || []).slice(0, 8).map(c => esc(c.name)).join(", ");
+  const castArr = ((m.credits && m.credits.cast) || []).slice(0, 12);
+  const dir = ((m.credits && m.credits.crew) || []).find(c => c.job === "Director");
+  const castHtml = castArr.map(c =>
+    '<div class="p">' +
+    (c.profile_path ? '<img loading="lazy" src="' + IMG + 'w185' + c.profile_path + '" alt="">' : '<div class="ph">' + esc((c.name || "?").charAt(0)) + '</div>') +
+    '<b>' + esc(c.name) + '</b><small>' + esc(c.character) + '</small></div>'
+  ).join("");
   const money = n => "$" + Math.round(n / 1000000).toLocaleString() + " million";
+
   let h = '<button class="x" onclick="closeM()">✕</button>';
-  if (m.backdrop_path) h += '<img class="bd" src="' + IMG + 'w780' + m.backdrop_path + '" alt="">';
-  h += '<h2>' + esc(m.title) + '</h2>';
-  h += '<span class="tag">★ ' + (m.vote_average ? m.vote_average.toFixed(1) : "-") + '</span>';
+  if (m.backdrop_path) {
+    h += '<div class="hero"><img src="' + IMG + 'w780' + m.backdrop_path + '" alt=""><div class="hg"></div><h2>' + esc(m.title) + '</h2></div><div class="in">';
+  } else {
+    h += '<div class="in"><h2>' + esc(m.title) + '</h2>';
+  }
+  h += '<div class="tags"><span class="tag hot">★ ' + (m.vote_average ? m.vote_average.toFixed(1) : "-") + '</span>';
   if (m.release_date) h += '<span class="tag">' + esc(m.release_date) + '</span>';
   if (m.runtime) h += '<span class="tag">' + m.runtime + ' min</span>';
   (m.genres || []).forEach(g => { h += '<span class="tag">' + esc(g.name) + '</span>'; });
+  h += '</div>';
+  if (dir) h += '<p><b>Director:</b> ' + esc(dir.name) + '</p>';
   if (mine) {
-    h += '<h3>Hamara Review' + (mine.rating ? ' (' + esc(mine.rating) + ')' : '') + '</h3><p class="mine">' + esc(mine.review) + '</p>';
+    h += '<h3>HAMARA REVIEW' + (mine.rating ? ' (' + esc(mine.rating) + ')' : '') + '</h3><p class="mine">' + esc(mine.review) + '</p>';
     if (mine.india) h += '<p><b>India Collection:</b> ' + esc(mine.india) + '</p>';
   }
-  if (m.overview) h += '<h3>Kahani</h3><p>' + esc(m.overview) + '</p>';
-  if (cast) h += '<h3>Cast</h3><p>' + cast + '</p>';
+  if (m.overview) h += '<h3>KAHANI</h3><p>' + esc(m.overview) + '</p>';
+  if (castHtml) h += '<h3>CAST</h3><div class="cast">' + castHtml + '</div>';
   if (m.revenue > 0 || m.budget > 0) {
-    h += '<h3>Worldwide Collection</h3>';
-    if (m.budget > 0) h += '<p>Budget: ' + money(m.budget) + '</p>';
-    if (m.revenue > 0) h += '<p>Collection: ' + money(m.revenue) + '</p>';
+    h += '<h3>WORLDWIDE COLLECTION</h3><div class="stat">';
+    if (m.budget > 0) h += '<div><b>' + money(m.budget) + '</b><small>Budget</small></div>';
+    if (m.revenue > 0) h += '<div><b>' + money(m.revenue) + '</b><small>Collection</small></div>';
+    h += '</div>';
   }
-  if (tr) h += '<h3>Official Trailer</h3><div class="video"><iframe src="https://www.youtube.com/embed/' + tr.key + '" allowfullscreen></iframe></div>';
+  if (tr) h += '<h3>OFFICIAL TRAILER</h3><div class="video"><iframe src="https://www.youtube.com/embed/' + tr.key + '" allowfullscreen></iframe></div>';
   if (prov) {
     const names = (prov.flatrate || []).concat(prov.rent || []).map(x => x.provider_name);
     const uniq = names.filter((n, i) => names.indexOf(n) === i);
-    h += '<h3>Kahan Dekhein (India)</h3>';
+    h += '<h3>KAHAN DEKHEIN (INDIA)</h3>';
     if (uniq.length) h += '<p>' + esc(uniq.join(", ")) + '</p>';
     if (prov.link) h += '<a class="ott" href="' + esc(prov.link) + '" target="_blank" rel="noopener">Legally dekhne ke options</a>';
   }
+  h += '</div>';
   box.innerHTML = h;
+  modal.scrollTop = 0;
 }
 
 function closeM() {
   modal.classList.remove("show");
   box.innerHTML = "";
+  document.body.style.overflow = "";
 }
 
 modal.onclick = e => { if (e.target === modal) closeM(); };
