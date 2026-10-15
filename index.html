@@ -4,35 +4,59 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ScreenVibe India - Movie Reviews, News & Trailers</title>
+<meta name="description" content="Bollywood, Hollywood aur South films ke reviews, trailers, cast aur box office. Kahan legally dekhein, sab ek jagah.">
 <style>
 body{margin:0;background:#0f0f12;color:#fff;font-family:Arial,sans-serif}
 header{background:#1a1a24;padding:15px;text-align:center;border-bottom:2px solid #e50914}
 header h1{margin:0;color:#e50914;font-size:24px}
 header p{margin:5px 0 0;font-size:12px;color:#aaa}
-nav{display:flex;gap:8px;justify-content:center;padding:12px;background:#15151d;position:sticky;top:0}
-nav button{background:#2a2a38;color:#fff;border:0;padding:8px 16px;border-radius:20px;font-size:14px}
+.search{display:flex;gap:8px;padding:12px;max-width:900px;margin:auto}
+.search input{flex:1;padding:10px;border-radius:8px;border:0;background:#1f1f2b;color:#fff;font-size:15px}
+.search button{background:#e50914;color:#fff;border:0;padding:10px 16px;border-radius:8px;font-size:14px}
+nav{display:flex;gap:8px;overflow-x:auto;padding:0 12px 12px;max-width:900px;margin:auto}
+nav button{white-space:nowrap;background:#2a2a38;color:#fff;border:0;padding:8px 14px;border-radius:20px;font-size:14px}
 nav button.active{background:#e50914}
-.container{max-width:800px;margin:auto;padding:15px}
-.card{background:#1a1a24;border-radius:8px;padding:15px;margin-bottom:20px}
-.card h2{color:#ffcc00;font-size:18px;margin:0 0 8px}
-.badge{display:inline-block;background:#e50914;padding:3px 8px;font-size:11px;border-radius:4px;font-weight:bold;margin-right:5px}
-.story{font-size:14px;line-height:1.6;color:#ddd}
-.video{position:relative;padding-bottom:56.25%;height:0;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px;max-width:900px;margin:auto}
+@media(min-width:600px){.grid{grid-template-columns:repeat(4,1fr)}}
+.c{background:#1a1a24;border-radius:8px;overflow:hidden;position:relative;cursor:pointer}
+.c img{width:100%;display:block;aspect-ratio:2/3;object-fit:cover;background:#222}
+.c p{margin:8px;font-size:13px}
+.r{position:absolute;top:6px;left:6px;background:#e50914;font-size:11px;padding:2px 6px;border-radius:4px;font-weight:bold}
+.msg{grid-column:1/-1;text-align:center;color:#ccc;padding:30px 10px}
+#more{display:block;margin:10px auto 20px;background:#2a2a38;color:#fff;border:0;padding:10px 24px;border-radius:20px;font-size:14px}
+#modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);overflow:auto;z-index:9}
+#modal.show{display:block}
+.box{max-width:700px;margin:15px auto;background:#1a1a24;border-radius:10px;padding:15px;position:relative}
+.x{position:absolute;top:10px;right:10px;background:#e50914;color:#fff;border:0;border-radius:50%;width:34px;height:34px;font-size:16px;z-index:2}
+.bd{width:100%;border-radius:8px;display:block}
+.box h2{color:#ffcc00;margin:12px 0 6px;font-size:20px}
+.tag{display:inline-block;background:#e50914;padding:3px 8px;font-size:11px;border-radius:4px;font-weight:bold;margin:0 5px 5px 0}
+.box h3{font-size:15px;margin:16px 0 6px;color:#ffcc00}
+.box p{font-size:14px;line-height:1.6;color:#ddd;margin:6px 0}
+.video{position:relative;padding-bottom:56.25%;height:0;margin:8px 0}
 .video iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;border-radius:6px}
-.ott{display:block;background:#28a745;color:#fff;text-align:center;padding:10px;text-decoration:none;border-radius:5px;font-weight:bold;margin-top:10px}
-footer{text-align:center;color:#777;font-size:12px;padding:20px}
+.ott{display:block;background:#28a745;color:#fff;text-align:center;padding:10px;text-decoration:none;border-radius:5px;font-weight:bold;margin-top:8px}
+.mine{background:#232334;border-left:3px solid #e50914;padding:8px 12px;border-radius:4px}
+footer{text-align:center;color:#777;font-size:11px;padding:20px 15px}
 </style>
 </head>
 <body>
 <header><h1>ScreenVibe India</h1><p>Movie Reviews, News & Official Trailers</p></header>
-<nav>
-<button class="active" data-t="all">All</button>
-<button data-t="review">Reviews</button>
-<button data-t="news">News</button>
-<button data-t="trailer">Trailers</button>
+<div class="search">
+<input id="q" placeholder="Film ka naam search karo...">
+<button id="go">Search</button>
+</div>
+<nav id="tabs">
+<button class="active" data-t="trending">Trending</button>
+<button data-t="now">Now Playing</button>
+<button data-t="upcoming">Upcoming</button>
+<button data-t="top">Top Rated</button>
+<button data-t="reviews">Our Reviews</button>
 </nav>
-<div class="container" id="list"></div>
-<footer>© ScreenVibe India</footer>
+<div class="grid" id="grid"></div>
+<button id="more">Aur dikhao</button>
+<div id="modal"><div class="box" id="box"></div></div>
+<footer>© ScreenVibe India. Movie data aur images TMDB se. This product uses the TMDB API but is not endorsed or certified by TMDB.</footer>
 <script src="main.js"></script>
 </body>
 </html>
