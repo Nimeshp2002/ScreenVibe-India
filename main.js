@@ -1,51 +1,128 @@
-const posts = [
-  {
-    type: "review",
-    title: "Film ka Naam",
-    rating: "3.5/5",
-    genre: "Action | Drama",
-    text: "Yahan apne words mein review likho.",
-    youtube: "",
-    ottName: "Netflix",
-    ottLink: "https://www.netflix.com"
-  },
-  {
-    type: "news",
-    title: "Filmi khabar ki headline",
-    text: "Apne words mein 3-4 line ki khabar likho.",
-    source: "https://example.com"
-  },
-  {
-    type: "trailer",
-    title: "Film ka Official Trailer",
-    youtube: ""
-  }
-];
+const API_KEY = "99ff3e248fb87f34f6960c8265b40fc1";
 
-const list = document.getElementById("list");
+// Apne reviews aur India collection yahan daalo. Key = TMDB film ID
+const MY = {
+  // 550: { rating: "4/5", review: "Apne words mein review.", india: "₹100 Cr" },
+};
 
-function show(t) {
-  list.innerHTML = "";
-  posts.filter(p => t === "all" || p.type === t).forEach(p => {
-    let h = '<div class="card"><h2>' + p.title + '</h2>';
-    h += '<span class="badge">' + p.type.toUpperCase() + '</span>';
-    if (p.rating) h += '<span class="badge">' + p.rating + '</span>';
-    if (p.genre) h += '<span class="badge">' + p.genre + '</span>';
-    if (p.youtube) h += '<div class="video"><iframe src="https://www.youtube.com/embed/' + p.youtube + '" allowfullscreen></iframe></div>';
-    if (p.text) h += '<p class="story">' + p.text + '</p>';
-    if (p.source) h += '<p class="story"><a style="color:#4da3ff" href="' + p.source + '" target="_blank">Source</a></p>';
-    if (p.ottLink) h += '<a class="ott" href="' + p.ottLink + '" target="_blank">Watch legally on ' + p.ottName + '</a>';
-    h += '</div>';
-    list.innerHTML += h;
-  });
+const API = "https://api.themoviedb.org/3";
+const IMG = "https://image.tmdb.org/t/p/";
+const PATHS = { trending: "/trending/movie/week", now: "/movie/now_playing", upcoming: "/movie/upcoming", top: "/movie/top_rated" };
+let tab = "trending", page = 1, query = "";
+const grid = document.getElementById("grid");
+const more = document.getElementById("more");
+const modal = document.getElementById("modal");
+const box = document.getElementById("box");
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
 
-document.querySelectorAll("nav button").forEach(b => {
+async function api(path, params) {
+  const r = await fetch(API + path + "?api_key=" + API_KEY + "&region=IN" + (params || ""));
+  return r.json();
+}
+
+function card(m) {
+  const p = m.poster_path ? IMG + "w342" + m.poster_path : "";
+  const y = (m.release_date || "").slice(0, 4);
+  const r = m.vote_average ? m.vote_average.toFixed(1) : "-";
+  return '<div class="c" onclick="openMovie(' + m.id + ')"><span class="r">★ ' + r + '</span><img loading="lazy" src="' + p + '" alt=""><p><b>' + esc(m.title) + '</b><br><small>' + y + '</small></p></div>';
+}
+
+async function load(reset) {
+  if (API_KEY.indexOf("YAHAN") === 0) {
+    grid.innerHTML = '<p class="msg">Pehle main.js ki pehli line mein apni TMDB API key daalo.</p>';
+    more.style.display = "none";
+    return;
+  }
+  if (reset) { page = 1; grid.innerHTML = ""; }
+  more.style.display = "block";
+  try {
+    let list = [];
+    if (query) {
+      const d = await api("/search/movie", "&query=" + encodeURIComponent(query) + "&page=" + page);
+      list = d.results || [];
+      if (page >= d.total_pages) more.style.display = "none";
+    } else if (tab === "reviews") {
+      more.style.display = "none";
+      const ids = Object.keys(MY);
+      if (!ids.length) { grid.innerHTML = '<p class="msg">Abhi koi review nahi hai. main.js mein MY ke andar apna pehla review add karo.</p>'; return; }
+      list = await Promise.all(ids.map(id => api("/movie/" + id)));
+    } else {
+      const d = await api(PATHS[tab], "&page=" + page);
+      list = d.results || [];
+    }
+    if (!list.length && page === 1) grid.innerHTML = '<p class="msg">Koi film nahi mili.</p>';
+    grid.innerHTML += list.map(card).join("");
+  } catch (e) {
+    grid.innerHTML = '<p class="msg">Data load nahi hua. Internet ya API key check karo.</p>';
+  }
+}
+
+async function openMovie(id) {
+  box.innerHTML = '<p>Loading...</p>';
+  modal.classList.add("show");
+  const m = await api("/movie/" + id, "&append_to_response=credits,videos,watch/providers");
+  const mine = MY[id];
+  const vids = ((m.videos && m.videos.results) || []).filter(v => v.site === "YouTube" && v.type === "Trailer");
+  const tr = vids.find(v => v.official) || vids[0];
+  const prov = m["watch/providers"] && m["watch/providers"].results && m["watch/providers"].results.IN;
+  const cast = ((m.credits && m.credits.cast) || []).slice(0, 8).map(c => esc(c.name)).join(", ");
+  const money = n => "$" + Math.round(n / 1000000).toLocaleString() + " million";
+  let h = '<button class="x" onclick="closeM()">✕</button>';
+  if (m.backdrop_path) h += '<img class="bd" src="' + IMG + 'w780' + m.backdrop_path + '" alt="">';
+  h += '<h2>' + esc(m.title) + '</h2>';
+  h += '<span class="tag">★ ' + (m.vote_average ? m.vote_average.toFixed(1) : "-") + '</span>';
+  if (m.release_date) h += '<span class="tag">' + esc(m.release_date) + '</span>';
+  if (m.runtime) h += '<span class="tag">' + m.runtime + ' min</span>';
+  (m.genres || []).forEach(g => { h += '<span class="tag">' + esc(g.name) + '</span>'; });
+  if (mine) {
+    h += '<h3>Hamara Review' + (mine.rating ? ' (' + esc(mine.rating) + ')' : '') + '</h3><p class="mine">' + esc(mine.review) + '</p>';
+    if (mine.india) h += '<p><b>India Collection:</b> ' + esc(mine.india) + '</p>';
+  }
+  if (m.overview) h += '<h3>Kahani</h3><p>' + esc(m.overview) + '</p>';
+  if (cast) h += '<h3>Cast</h3><p>' + cast + '</p>';
+  if (m.revenue > 0 || m.budget > 0) {
+    h += '<h3>Worldwide Collection</h3>';
+    if (m.budget > 0) h += '<p>Budget: ' + money(m.budget) + '</p>';
+    if (m.revenue > 0) h += '<p>Collection: ' + money(m.revenue) + '</p>';
+  }
+  if (tr) h += '<h3>Official Trailer</h3><div class="video"><iframe src="https://www.youtube.com/embed/' + tr.key + '" allowfullscreen></iframe></div>';
+  if (prov) {
+    const names = (prov.flatrate || []).concat(prov.rent || []).map(x => x.provider_name);
+    const uniq = names.filter((n, i) => names.indexOf(n) === i);
+    h += '<h3>Kahan Dekhein (India)</h3>';
+    if (uniq.length) h += '<p>' + esc(uniq.join(", ")) + '</p>';
+    if (prov.link) h += '<a class="ott" href="' + esc(prov.link) + '" target="_blank" rel="noopener">Legally dekhne ke options</a>';
+  }
+  box.innerHTML = h;
+}
+
+function closeM() {
+  modal.classList.remove("show");
+  box.innerHTML = "";
+}
+
+modal.onclick = e => { if (e.target === modal) closeM(); };
+
+document.querySelectorAll("#tabs button").forEach(b => {
   b.onclick = () => {
-    document.querySelector("nav button.active").classList.remove("active");
+    document.querySelector("#tabs button.active").classList.remove("active");
     b.classList.add("active");
-    show(b.dataset.t);
+    tab = b.dataset.t;
+    query = "";
+    document.getElementById("q").value = "";
+    load(true);
   };
 });
 
-show("all");
+function doSearch() {
+  query = document.getElementById("q").value.trim();
+  load(true);
+}
+document.getElementById("go").onclick = doSearch;
+document.getElementById("q").onkeydown = e => { if (e.key === "Enter") doSearch(); };
+more.onclick = () => { page++; load(false); };
+
+load(true);
