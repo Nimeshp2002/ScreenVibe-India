@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://screenvibeindia.vercel.app/sitemap.xml
