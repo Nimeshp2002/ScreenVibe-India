@@ -230,3 +230,4 @@ a.tag:hover{border-color:var(--gold);color:var(--gold)}
 .ft nav a{text-decoration:none;font-weight:700;color:var(--tx)}
 .ft p{margin:0;max-width:70ch}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.logo::before{content:"";display:block;width:34px;height:34px;border-radius:9px;background:url(/logo-icon.png) center/cover no-repeat}
