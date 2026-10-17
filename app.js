@@ -99,6 +99,9 @@
 
   /* ---------- shell: header, bottom nav, footer, modal ---------- */
   function shell(page) {
+         [["icon", "/favicon.png"], ["apple-touch-icon", "/apple-touch-icon.png"]].forEach(function (x) {
+      var l = document.createElement("link"); l.rel = x[0]; l.href = x[1]; document.head.appendChild(l);
+    });
     var links = NAV.map(function (n) { return '<a href="' + n[1] + '"' + (n[0] === page ? ' class="on"' : "") + ">" + n[2] + "</a>"; }).join("") +
       '<a href="/about"' + (page === "about" ? ' class="on"' : "") + ">About</a>";
     var tabs = NAV.map(function (n) { return '<a href="' + n[1] + '"' + (n[0] === page ? ' class="on"' : "") + ">" + IC[n[0]] + "<span>" + n[2] + "</span></a>"; }).join("");
