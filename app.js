@@ -2,6 +2,7 @@
    Apna data (API key, reviews, news) sirf data.js mein badlo. */
 (function () {
   "use strict";
+   ["icon:/favicon.png", "apple-touch-icon:/apple-touch-icon.png"].forEach(function (x) { var p = x.split(":"), l = document.createElement("link"); l.rel = p[0]; l.href = p[1]; document.head.appendChild(l); });
   var D = window.SV || {};
   D.MY = D.MY || {};
   D.NEWS = D.NEWS || [];
